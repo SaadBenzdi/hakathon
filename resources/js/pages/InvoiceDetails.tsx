@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import jsPDF from 'jspdf';
 import { Head, Link, useForm } from '@inertiajs/react';
 import { Calendar, Clock, MapPin, FileText, Download, CreditCard, Banknote, ChevronLeft } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -44,6 +45,119 @@ interface InvoiceDetailsProps {
 const InvoiceDetails: React.FC<InvoiceDetailsProps> = ({ invoice }) => {
   const { toast } = useToast();
   const [paymentDialogOpen, setPaymentDialogOpen] = useState(false);
+
+  // --- jsPDF handler ---
+  const handleDownloadPDF = () => {
+    const doc = new jsPDF();
+    const pageWidth = doc.internal.pageSize.width;
+    
+    // Header
+    doc.setFontSize(22);
+    doc.setFont('helvetica', 'bold');
+    doc.text('VenueBook', 20, 30);
+    
+    // Company info on right
+    doc.setFontSize(12);
+    doc.setFont('helvetica', 'normal');
+    doc.text('', pageWidth - 20, 30, { align: 'right' });
+    
+    // Invoice details
+    doc.setFontSize(10);
+    doc.text(`Facture N°: ${invoice.invoice_number}`, 20, 45);
+    doc.text(`Date d'émission: ${formatDate(invoice.creation_date)}`, 20, 52);
+    // Calculate due date (30 days after creation)
+    const creationDate = new Date(invoice.creation_date);
+    const dueDate = new Date(creationDate.getTime() + 30*24*60*60*1000);
+    doc.text(`Date d'échéance: ${formatDate(dueDate.toISOString())}`, 20, 59);
+    
+    // Billing information
+    doc.setFillColor(240, 240, 240);
+    doc.rect(20, 70, pageWidth - 40, 40, 'F');
+    
+    doc.setFontSize(11);
+    doc.setFont('helvetica', 'bold');
+    doc.text('Facturé par', 30, 80);
+    doc.text('Facturé à', pageWidth / 2 + 10, 80);
+    
+    doc.setFont('helvetica', 'normal');
+    doc.setFontSize(10);
+    doc.text('VenueBook', 30, 88);
+    doc.text(`${invoice.reservation.venue.location}`, 30, 95);
+    doc.text('(+212) 522-000-000', 30, 102);
+    
+    doc.text(`${invoice.reservation.user.name}`, pageWidth / 2 + 10, 88);
+    doc.text(`${invoice.reservation.venue.name}`, pageWidth / 2 + 10, 95);
+    doc.text(`${invoice.reservation.user.email}`, pageWidth / 2 + 10, 102);
+    
+    // Table header
+    const tableTop = 120;
+    doc.setFillColor(50, 50, 50);
+    doc.setTextColor(255, 255, 255);
+    doc.rect(20, tableTop, pageWidth - 40, 10, 'F');
+    
+    doc.setFontSize(10);
+    doc.setFont('helvetica', 'bold');
+    doc.text('Description', 25, tableTop + 7);
+    doc.text('Qté.', 120, tableTop + 7, { align: 'center' });
+    doc.text('Tarif', 150, tableTop + 7, { align: 'center' });
+    doc.text('Montant', pageWidth - 25, tableTop + 7, { align: 'right' });
+    
+    // Reset text color
+    doc.setTextColor(0, 0, 0);
+    
+    // Table content
+    let y = tableTop + 20;
+    doc.setFont('helvetica', 'normal');
+    
+    // Calculate hourly rate
+    const hours = calculateDuration();
+    const hourlyRate = Number(invoice.amount) / hours;
+    
+    doc.text(`Réservation: ${invoice.reservation.venue.name}`, 25, y);
+    doc.text(`${hours}`, 120, y, { align: 'center' });
+    doc.text(`${hourlyRate.toFixed(2)} DH`, 150, y, { align: 'center' });
+    doc.text(`${Number(invoice.amount).toFixed(2)} DH`, pageWidth - 25, y, { align: 'right' });
+    
+    // Totals
+    y = y + 30;
+    doc.text('Sous-total:', pageWidth - 80, y);
+    doc.text(`${Number(invoice.amount).toFixed(2)} DH`, pageWidth - 25, y, { align: 'right' });
+    
+    y += 7;
+    doc.text('TVA (20%):', pageWidth - 80, y);
+    doc.text(`${(Number(invoice.amount) * 0.2).toFixed(2)} DH`, pageWidth - 25, y, { align: 'right' });
+    
+    y += 10;
+    doc.setFont('helvetica', 'bold');
+    doc.text('Total TTC:', pageWidth - 80, y);
+    doc.text(`${(Number(invoice.amount) * 1.2).toFixed(2)} DH`, pageWidth - 25, y, { align: 'right' });
+    
+    // Terms
+    y += 30;
+    doc.setFont('helvetica', 'bold');
+    doc.text('Conditions:', 20, y);
+    doc.setFont('helvetica', 'normal');
+    doc.text('Merci pour votre confiance!', 20, y + 10);
+    
+    // Status watermark if not paid
+    if (invoice.payment_status !== 'paid') {
+      doc.setFont('helvetica', 'bold');
+      doc.setTextColor(220, 50, 50, 0.3); // Red with transparency
+      doc.setFontSize(60);
+      const statusText = invoice.payment_status === 'unpaid' ? 'NON PAYÉE' : 'REMBOURSÉE';
+      doc.text(statusText, pageWidth/2, 160, { 
+        align: 'center',
+        angle: 45
+      });
+    }
+    
+    doc.save(`facture-${invoice.invoice_number}.pdf`);
+    toast({
+      title: 'PDF téléchargé',
+      description: 'Votre facture a été générée et téléchargée.',
+    });
+  };
+
   
   const { data, setData, post, processing, errors } = useForm({
     payment_method: 'card',
@@ -139,14 +253,14 @@ const InvoiceDetails: React.FC<InvoiceDetailsProps> = ({ invoice }) => {
               <h1 className="text-2xl font-bold text-gray-900">Facture {invoice.invoice_number}</h1>
             </div>
             
-            {invoice.pdf_path && (
-              <Link href={route('invoices.download', invoice.id)}>
-                <Button variant="outline" className="flex items-center">
-                  <Download className="w-4 h-4 mr-2" />
-                  Télécharger PDF
-                </Button>
-              </Link>
-            )}
+            <Button
+              variant="outline"
+              className="flex items-center"
+              onClick={handleDownloadPDF}
+            >
+              <Download className="w-4 h-4 mr-2" />
+              Télécharger PDF
+            </Button>
           </div>
           
           <div className="grid md:grid-cols-3 gap-6">
@@ -299,7 +413,7 @@ const InvoiceDetails: React.FC<InvoiceDetailsProps> = ({ invoice }) => {
       </div>
       
       {/* Payment Dialog */}
-      <Dialog open={paymentDialogOpen} onOpenChange={setPaymentDialogOpen}>
+      <Dialog>
         <DialogContent>
           <DialogHeader>
             <DialogTitle>Procéder au paiement</DialogTitle>
@@ -374,7 +488,7 @@ const InvoiceDetails: React.FC<InvoiceDetailsProps> = ({ invoice }) => {
           </div>
           
           <DialogFooter>
-            <Button variant="outline" onClick={() => setPaymentDialogOpen(false)}>
+            <Button variant="outline" onClick={() => { console.log('close dialog'); setPaymentDialogOpen(false); }}>
               Annuler
             </Button>
             <Button 

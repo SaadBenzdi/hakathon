@@ -38,7 +38,8 @@ Route::middleware(['auth'])->group(function () {
     Route::get('/my-invoices', [InvoiceController::class, 'index'])->name('invoices.index');
     Route::get('/invoices/{invoice}', [InvoiceController::class, 'show'])->name('invoices.show');
     Route::post('/invoices/{invoice}/payment', [InvoiceController::class, 'processPayment'])->name('invoices.payment');
-    Route::get('/invoices/{invoice}/download', [InvoiceController::class, 'downloadPDF'])->name('invoices.download');
+    // Route for downloading invoice as PDF
+Route::get('/invoices/{invoice}/download', [InvoiceController::class, 'downloadPDF'])->name('invoices.download');
     
     // Venue availability check
     Route::post('/venues/{venue}/availability', [VenueController::class, 'checkAvailability'])->name('venues.availability');

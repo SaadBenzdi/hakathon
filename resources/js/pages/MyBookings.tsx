@@ -91,7 +91,11 @@ const MyBookings: React.FC<MyBookingsProps> = ({ reservations }) => {
   };
   
   const confirmCancelReservation = () => {
-    if (!reservationToCancel) return;
+    console.log('confirmCancelReservation called', reservationToCancel);
+    if (!reservationToCancel) {
+      console.log('No reservation to cancel');
+      return;
+    }
     
     fetch(route('reservations.update', reservationToCancel), {
       method: 'PUT',
@@ -306,7 +310,7 @@ const MyBookings: React.FC<MyBookingsProps> = ({ reservations }) => {
       </div>
       
       {/* Cancel Reservation Dialog */}
-      <Dialog open={cancelDialogOpen} onOpenChange={setCancelDialogOpen}>
+      <Dialog>
         <DialogContent>
           <DialogHeader>
             <DialogTitle>Confirmer l'annulation</DialogTitle>
@@ -328,7 +332,10 @@ const MyBookings: React.FC<MyBookingsProps> = ({ reservations }) => {
             </Button>
             <Button 
               variant="destructive"
-              onClick={confirmCancelReservation}
+              onClick={() => {
+                console.log('Cancel button clicked');
+                confirmCancelReservation();
+              }}
             >
               Oui, annuler la réservation
             </Button>

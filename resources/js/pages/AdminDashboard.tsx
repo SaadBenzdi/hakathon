@@ -142,7 +142,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
                 <Link href="/" className="text-xl font-bold text-gray-900">VenueBook</Link>
               </div>
               <nav className="hidden md:flex space-x-8">
-                <Link href="/admin/venues" className="text-gray-600 hover:text-gray-900 transition-colors">Venues</Link>
+                <Link href="/admin/venues" className="text-gray-600 hover:text-gray-900 transition-colors">Venuesiii</Link>
                 <Link href="/admin/reservations" className="text-gray-600 hover:text-gray-900 transition-colors">Réservations</Link>
                 <Link href="/admin/invoices" className="text-gray-600 hover:text-gray-900 transition-colors">Factures</Link>
               </nav>
