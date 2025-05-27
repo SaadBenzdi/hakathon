@@ -24,7 +24,75 @@ require __DIR__.'/auth.php';
 Route::middleware(['auth'])->group(function () {
     // User dashboard
     Route::get('/dashboard', function () {
-        return Inertia::render('Dashboard');
+        $user = auth()->user();
+        
+        // Calculer les statistiques
+        $stats = [
+            'upcoming_reservations' => \App\Models\Reservation::where('user_id', $user->id)
+                ->where('date', '>=', now()->format('Y-m-d'))
+                ->count(),
+            'total_reservations' => \App\Models\Reservation::where('user_id', $user->id)->count(),
+            'unpaid_invoices' => \App\Models\Invoice::whereHas('reservation', function($query) use ($user) {
+                    $query->where('user_id', $user->id);
+                })
+                ->where('payment_status', 'unpaid')
+                ->count(),
+            'total_spent' => \App\Models\Invoice::whereHas('reservation', function($query) use ($user) {
+                    $query->where('user_id', $user->id);
+                })
+                ->where('payment_status', 'paid')
+                ->sum('amount')
+        ];
+        
+        // Récupérer les réservations à venir
+        $upcoming_reservations = \App\Models\Reservation::with('venue')
+            ->where('user_id', $user->id)
+            ->where('date', '>=', now()->format('Y-m-d'))
+            ->orderBy('date')
+            ->limit(5)
+            ->get()
+            ->map(function ($reservation) {
+                return [
+                    'id' => $reservation->id,
+                    'date' => $reservation->date,
+                    'start_time' => $reservation->start_time,
+                    'end_time' => $reservation->end_time,
+                    'status' => $reservation->status,
+                    'venue' => [
+                        'id' => $reservation->venue->id,
+                        'name' => $reservation->venue->name,
+                        'location' => $reservation->venue->location,
+                    ]
+                ];
+            });
+        
+        // Récupérer les factures récentes
+        $recent_invoices = \App\Models\Invoice::where('user_id', $user->id)
+            ->orderBy('created_at', 'desc')
+            ->limit(5)
+            ->get()
+            ->map(function ($invoice) {
+                return [
+                    'id' => $invoice->id,
+                    'invoice_number' => $invoice->invoice_number,
+                    'amount' => $invoice->amount,
+                    'creation_date' => $invoice->created_at->format('Y-m-d'),
+                    'payment_status' => $invoice->payment_status
+                ];
+            });
+        
+        return Inertia::render('dashboard', [
+            'user' => [
+                'id' => $user->id,
+                'name' => $user->name,
+                'email' => $user->email,
+                'qr_code' => $user->qr_code,
+                'role' => $user->role
+            ],
+            'stats' => $stats,
+            'upcoming_reservations' => $upcoming_reservations,
+            'recent_invoices' => $recent_invoices
+        ]);
     })->name('dashboard');
     
     // My bookings

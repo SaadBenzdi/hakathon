@@ -9,14 +9,18 @@ return new class extends Migration
     public function up()
     {
         Schema::table('users', function (Blueprint $table) {
-            $table->string('qr_code')->unique()->nullable()->after('password');
+            if (!Schema::hasColumn('users', 'qr_code')) {
+                $table->text('qr_code')->nullable()->after('password');
+            }
         });
     }
 
     public function down()
     {
         Schema::table('users', function (Blueprint $table) {
-            $table->dropColumn('qr_code');
+            if (Schema::hasColumn('users', 'qr_code')) {
+                $table->dropColumn('qr_code');
+            }
         });
     }
 };

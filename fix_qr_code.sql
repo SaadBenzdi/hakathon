@@ -1,0 +1,1 @@
+ALTER TABLE users MODIFY COLUMN qr_code TEXT;

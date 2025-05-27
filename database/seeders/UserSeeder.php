@@ -17,9 +17,9 @@ class UserSeeder extends Seeder
         // Create admin user
         User::create([
             'name' => 'Admin User',
-            'email' => 'admin@venuebook.ma',
+            'email' => 'admin@gmail.com',
             'email_verified_at' => now(),
-            'password' => Hash::make('password'),
+            'password' => Hash::make('admin@gmail.com'),
             'qr_code' => Str::random(32),
             'role' => 'admin',
             'remember_token' => Str::random(10),

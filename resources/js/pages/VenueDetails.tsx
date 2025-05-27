@@ -135,7 +135,7 @@ const VenueDetails: React.FC<VenueDetailsProps> = ({ venue, availableSlots, auth
               </div>
               <nav className="hidden md:flex space-x-8">
                 <Link href={route('venues.index')} className="text-gray-600 hover:text-gray-900 transition-colors">Venues</Link>
-                <Link href={route('reservations.index')} className="text-gray-600 hover:text-gray-900 transition-colors">Mes Ru00e9servations</Link>
+                <Link href={route('reservations.index')} className="text-gray-600 hover:text-gray-900 transition-colors">Mes Reservation</Link>
                 <Link href={route('admin.dashboard')} className="text-gray-600 hover:text-gray-900 transition-colors">Admin</Link>
               </nav>
               <div className="flex items-center space-x-4">

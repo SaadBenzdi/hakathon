@@ -1,6 +1,6 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Head, useForm } from '@inertiajs/react';
-import { QrReader } from 'react-qr-reader';
+import { Html5Qrcode } from 'html5-qrcode';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -9,16 +9,67 @@ import { useToast } from '@/hooks/use-toast';
 const QrLogin = () => {
   const { toast } = useToast();
   const [scanActive, setScanActive] = useState(false);
+  const qrScannerRef = useRef<HTMLDivElement>(null);
+  const html5QrCodeRef = useRef<Html5Qrcode | null>(null);
   
   const { data, setData, post, processing, errors } = useForm({
     qr_code: '',
   });
 
-  const handleQrScan = (result: any) => {
-    if (result) {
-      setData('qr_code', result?.text);
+  useEffect(() => {
+    // Nettoyer le scanner lorsque le composant est démonté
+    return () => {
+      if (html5QrCodeRef.current && html5QrCodeRef.current.isScanning) {
+        html5QrCodeRef.current.stop().catch(error => console.error('Erreur lors de l\'arrêt du scanner:', error));
+      }
+    };
+  }, []);
+
+  const startScanner = () => {
+    if (!qrScannerRef.current) return;
+    
+    setScanActive(true);
+    
+    const qrScanner = new Html5Qrcode('qr-reader');
+    html5QrCodeRef.current = qrScanner;
+    
+    qrScanner.start(
+      { facingMode: 'environment' },
+      {
+        fps: 10,
+        qrbox: { width: 250, height: 250 },
+      },
+      (decodedText) => {
+        // Succès du scan
+        setData('qr_code', decodedText);
+        stopScanner();
+        handleSubmit();
+      },
+      (errorMessage) => {
+        // Erreur silencieuse pendant le scan (pas besoin de l'afficher)
+        console.log(errorMessage);
+      }
+    ).catch(error => {
+      // Erreur lors du démarrage du scanner
+      console.error(error);
+      toast({
+        title: 'Erreur de scan',
+        description: 'Impossible d\'accéder à la caméra ou de scanner le code QR.',
+        variant: 'destructive',
+      });
       setScanActive(false);
-      handleSubmit();
+    });
+  };
+
+  const stopScanner = () => {
+    if (html5QrCodeRef.current && html5QrCodeRef.current.isScanning) {
+      html5QrCodeRef.current.stop().then(() => {
+        setScanActive(false);
+      }).catch(error => {
+        console.error('Erreur lors de l\'arrêt du scanner:', error);
+      });
+    } else {
+      setScanActive(false);
     }
   };
 
@@ -55,15 +106,11 @@ const QrLogin = () => {
           <CardContent>
             {scanActive ? (
               <div className="mb-6">
-                <QrReader
-                  constraints={{ facingMode: 'environment' }}
-                  onResult={handleQrScan}
-                  className="w-full rounded-lg overflow-hidden"
-                />
+                <div id="qr-reader" ref={qrScannerRef} className="w-full rounded-lg overflow-hidden" style={{ maxWidth: '100%' }}></div>
                 <Button 
                   variant="outline" 
                   className="w-full mt-4"
-                  onClick={() => setScanActive(false)}
+                  onClick={stopScanner}
                 >
                   Annuler le scan
                 </Button>
@@ -73,7 +120,7 @@ const QrLogin = () => {
                 <div className="mb-6">
                   <Button 
                     className="w-full bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700"
-                    onClick={() => setScanActive(true)}
+                    onClick={startScanner}
                   >
                     Scanner un QR Code
                   </Button>

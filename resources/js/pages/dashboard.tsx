@@ -155,7 +155,7 @@ const Dashboard: React.FC<DashboardProps> = ({ user, stats, upcoming_reservation
             </div>
             
             <div className="mt-4 md:mt-0 flex space-x-3">
-              <Link href="/qr-code">
+              <Link href="/my-qr-code">
                 <Button variant="outline" className="flex items-center">
                   <QrCode className="w-4 h-4 mr-2" />
                   Voir mon QR Code

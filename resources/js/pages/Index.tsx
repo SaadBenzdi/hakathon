@@ -26,8 +26,10 @@ const Index: React.FC<IndexProps> = ({ auth }) => {
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div className="flex justify-between items-center h-16">
               <div className="flex items-center space-x-2">
-                <div className="w-8 h-8 bg-gradient-to-r from-green-500 to-blue-600 rounded-lg"></div>
-                <Link href="/" className="text-xl font-bold text-gray-900">VenueBook</Link>
+                <div className="size-25">
+                  <img src="7ajz.svg" alt="" />
+                </div>
+                {/* <Link href="/" className="text-xl font-bold text-gray-900">7jez Daba</Link> */}
               </div>
               <nav className="hidden md:flex space-x-8">
                 <Link href="/venues" className="text-gray-600 hover:text-gray-900 transition-colors">Venues</Link>

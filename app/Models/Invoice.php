@@ -50,6 +50,6 @@ class Invoice extends Model
      */
     public function user()
     {
-        return $this->reservation->user;
+        return $this->reservation ? $this->reservation->user : null;
     }
 }

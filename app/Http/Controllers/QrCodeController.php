@@ -91,6 +91,10 @@ class QrCodeController extends Controller
         
         return Inertia::render('MyQrCode', [
             'qrImage' => base64_encode($qrCodeImage),
+            'user' => [
+                'name' => $user->name,
+                'email' => $user->email
+            ]
         ]);
     }
 }
