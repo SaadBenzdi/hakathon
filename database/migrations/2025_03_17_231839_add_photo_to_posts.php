@@ -11,19 +11,18 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('posts', function (Blueprint $table) {
-            $table->id();
-            $table->string('title');
-            $table->text('body');
-            $table->timestamps();
+        Schema::table('posts', function (Blueprint $table) {
+            $table->string('photo')->nullable()->after('body');
         });
     }
 
     /**
      * Reverse the migrations.
      */
-    public function down(): void //This method will drop the posts table.
+    public function down(): void
     {
-        Schema::dropIfExists('posts');
+        Schema::table('posts', function (Blueprint $table) {
+            //
+        });
     }
 };
